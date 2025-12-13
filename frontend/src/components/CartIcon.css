@@ -1,0 +1,48 @@
+/* CartIcon.css */
+.cart-icon-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.icon-wrapper {
+  position: relative;
+  width: 32px;
+  height: 32px;
+}
+
+.cart-image {
+  width: 100%;
+  height: auto;
+  font-size: 28px;
+  filter: brightness(0) invert(1); 
+  
+}
+
+.cart-count {
+  position: absolute;
+  top: -8px;
+  right: 3px;
+  background-color: rgba(249, 249, 249, 0.453);
+  color: black;
+  font-size: 12px;
+  font-weight: bold;
+  padding: 1px 5px;
+  border-radius: 50%;
+  min-width: 18px;
+  text-align: center;
+}
+
+.cart-label {
+  font-size: 16px;
+}
+@media (max-width: 600px) {
+  .cart-icon-container {
+    font-size: 6px;
+  }
+
+
+}
