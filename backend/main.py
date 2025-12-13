@@ -1,186 +1,151 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy import create_engine, Column, Integer, String, Float
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from jose import jwt
 from pydantic import BaseModel
-from typing import List
+from jose import jwt
+from datetime import datetime, timedelta
 
 app = FastAPI()
 
-# Database configuration
+# Database setup
 SQLALCHEMY_DATABASE_URL = "postgresql://user:password@localhost/db"
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# Models
+# Define models
 Base = declarative_base()
 
 class User(Base):
     __tablename__ = "users"
-
     id = Column(Integer, primary_key=True, index=True)
-    username = Column(String, unique=True, index=True)
     email = Column(String, unique=True, index=True)
     password = Column(String)
+    name = Column(String)
 
-    def __init__(self, username: str, email: str, password: str):
-        self.username = username
+    def __init__(self, email, password, name):
         self.email = email
         self.password = password
+        self.name = name
+
+    def __repr__(self):
+        return f"User(id={self.id}, email='{self.email}', name='{self.name}')"
 
 class Product(Base):
     __tablename__ = "products"
-
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True)
     price = Column(Float, index=True)
+    stock = Column(Integer, index=True)
 
-    def __init__(self, name: str, price: float):
+    def __init__(self, name, price, stock):
         self.name = name
         self.price = price
+        self.stock = stock
+
+    def __repr__(self):
+        return f"Product(id={self.id}, name='{self.name}', price={self.price}, stock={self.stock})"
 
 class Cart(Base):
     __tablename__ = "carts"
-
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
-    product_id = Column(Integer, ForeignKey("products.id"))
+    user_id = Column(Integer, ForeignKey("users.id"), index=True)
+    product_id = Column(Integer, ForeignKey("products.id"), index=True)
     quantity = Column(Integer, index=True)
 
-    def __init__(self, user_id: int, product_id: int, quantity: int):
+    def __init__(self, user_id, product_id, quantity):
         self.user_id = user_id
         self.product_id = product_id
         self.quantity = quantity
 
+    def __repr__(self):
+        return f"Cart(id={self.id}, user_id={self.user_id}, product_id={self.product_id}, quantity={self.quantity})"
+
 class Order(Base):
     __tablename__ = "orders"
-
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
-    cart_id = Column(Integer, ForeignKey("carts.id"))
+    user_id = Column(Integer, ForeignKey("users.id"), index=True)
+    cart_id = Column(Integer, ForeignKey("carts.id"), index=True)
     payment_method = Column(String, index=True)
     status = Column(String, index=True)
 
-    def __init__(self, user_id: int, cart_id: int, payment_method: str, status: str):
+    def __init__(self, user_id, cart_id, payment_method, status):
         self.user_id = user_id
         self.cart_id = cart_id
         self.payment_method = payment_method
         self.status = status
 
-        # Pydantic models
-class UserIn(BaseModel):
-    username: str
-    email: str
-    password: str
+    def __repr__(self):
+        return f"Order(id={self.id}, user_id={self.user_id}, cart_id={self.cart_id}, payment_method='{self.payment_method}', status='{self.status}')"
 
-class UserOut(BaseModel):
-    id: int
-    username: str
-    email: str
+        # Create tables
+Base.metadata.create_all(bind=engine)
 
-class ProductIn(BaseModel):
-    name: str
-    price: float
+# Dependency
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+        except Exception as e:
+            pass
+finally:
+    db.close()
 
-class ProductOut(BaseModel):
-    id: int
-    name: str
-    price: float
-
-class CartIn(BaseModel):
-    user_id: int
-    product_id: int
-    quantity: int
-
-class CartOut(BaseModel):
-    id: int
-    user_id: int
-    product_id: int
-    quantity: int
-
-class OrderIn(BaseModel):
-    user_id: int
-    cart_id: int
-    payment_method: str
-    status: str
-
-class OrderOut(BaseModel):
-    id: int
-    user_id: int
-    cart_id: int
-    payment_method: str
-    status: str
-
-    # Authentication
+    # Security
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
-# Routes
-@app.post("/api/auth/register")
-def register(user: UserIn):
-    new_user = User(username=user.username, email=user.email, password=user.password)
-    db = SessionLocal()
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
-    return new_user
-
+# Authentication
 @app.post("/api/auth/login")
 def login(form_data: OAuth2PasswordRequestForm = Depends()):
-    user = authenticate_user(form_data.username, form_data.password)
-    if not user:
+    user = db.query(User).filter(User.email == form_data.username).first()
+    if not user or not verify_password(form_data.password, user.password):
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
-            headers={"WWW-Authenticate": "Bearer"},
+            status_code=401,
+            detail="Incorrect email or password",
         
     access_token_expires = timedelta(minutes=30)
     access_token = create_access_token(
-        data={"sub": user.username}, expires_delta=access_token_expires
+        data={"sub": user.email}, expires_delta=access_token_expires
     
-    return {"access_token": access_token, "token_type": "bearer"}
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+    
 
+@app.post("/api/auth/register")
+def register(user: User):
+    db.add(user)
+    db.commit()
+    return user
+
+    # Product management
 @app.get("/api/products")
-def read_products():
-    db = SessionLocal()
-    products = db.query(Product).all()
-    return products
+def get_products(db: Session = Depends(get_db)):
+    return db.query(Product).all()
 
 @app.get("/api/products/{product_id}")
-def read_product(product_id: int):
-    db = SessionLocal()
-    product = db.query(Product).filter(Product.id == product_id).first()
-    if product is None:
-        raise HTTPException(status_code=404, detail="Product not found")
-    return product
+def get_product(product_id: int, db: Session = Depends(get_db)):
+    return db.query(Product).filter(Product.id == product_id).first()
 
+    # Cart management
 @app.post("/api/cart")
-def add_item_to_cart(cart: CartIn):
-    db = SessionLocal()
-    new_cart_item = Cart(user_id=cart.user_id, product_id=cart.product_id, quantity=cart.quantity)
-    db.add(new_cart_item)
+def add_to_cart(cart: Cart, db: Session = Depends(get_db)):
+    db.add(cart)
     db.commit()
-    db.refresh(new_cart_item)
-    return new_cart_item
+    return cart
 
 @app.get("/api/cart")
-def read_cart():
-    db = SessionLocal()
-    cart_items = db.query(Cart).all()
-    return cart_items
+def get_cart(db: Session = Depends(get_db)):
+    return db.query(Cart).all()
 
+    # Order management
 @app.post("/api/orders")
-def create_order(order: OrderIn):
-    db = SessionLocal()
-    new_order = Order(user_id=order.user_id, cart_id=order.cart_id, payment_method=order.payment_method, status=order.status)
-    db.add(new_order)
+def create_order(order: Order, db: Session = Depends(get_db)):
+    db.add(order)
     db.commit()
-    db.refresh(new_order)
-    return new_order
+    return order
 
 @app.get("/api/orders")
-def read_orders():
-    db = SessionLocal()
-    orders = db.query(Order).all()
-    return orders))
+def get_orders(db: Session = Depends(get_db)):
+    return db.query(Order).all()}))
