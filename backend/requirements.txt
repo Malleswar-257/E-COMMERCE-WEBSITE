@@ -1,8 +1,7 @@
-fastapi>=0.104.0
-uvicorn>=0.24.0
-sqlalchemy>=1.4.0
-postgresql>=2.9.0
-docker>=20.10.0
-kubernetes>=1.21.0
-pydantic>=2.7.48.0
-jose>=3.3.0
+fastapi==0.104.1
+uvicorn==0.24.0
+sqlalchemy==2.0.0
+python-dotenv==1.0.0
+passlib==1.7.4
+bcrypt==4.0.0
+pydantic==2.7.4
