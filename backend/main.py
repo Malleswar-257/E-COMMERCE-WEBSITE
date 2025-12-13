@@ -1,32 +1,35 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from jose import jwt, JWTError
-from passlib.context import CryptContext
-from sqlalchemy import create_engine, Column, Integer, String, Float, ForeignKey
+from sqlalchemy import create_engine, Column, Integer, String, Float
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, relationship
+from sqlalchemy.orm import sessionmaker
+from jose import jwt
+from pydantic import BaseModel
 from typing import List
 
+app = FastAPI()
+
 # Database configuration
-SQLALCHEMY_DATABASE_URL = "postgresql://user:password@host:port/dbname"
+SQLALCHEMY_DATABASE_URL = "postgresql://user:password@localhost/db"
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# Base class for all models
+# Models
 Base = declarative_base()
 
-# User model
 class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, unique=True, index=True)
     email = Column(String, unique=True, index=True)
     password = Column(String)
 
-    cart = relationship("Cart", back_populates="user")
-    orders = relationship("Order", back_populates="user")
+    def __init__(self, username: str, email: str, password: str):
+        self.username = username
+        self.email = email
+        self.password = password
 
-    # Product model
 class Product(Base):
     __tablename__ = "products"
 
@@ -34,147 +37,150 @@ class Product(Base):
     name = Column(String, index=True)
     price = Column(Float, index=True)
 
-    cart = relationship("Cart", back_populates="product")
+    def __init__(self, name: str, price: float):
+        self.name = name
+        self.price = price
 
-    # Cart model
 class Cart(Base):
-    __tablename__ = "cart"
+    __tablename__ = "carts"
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"))
     product_id = Column(Integer, ForeignKey("products.id"))
     quantity = Column(Integer, index=True)
 
-    user = relationship("User", back_populates="cart")
-    product = relationship("Product", back_populates="cart")
+    def __init__(self, user_id: int, product_id: int, quantity: int):
+        self.user_id = user_id
+        self.product_id = product_id
+        self.quantity = quantity
 
-    # Order model
 class Order(Base):
     __tablename__ = "orders"
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"))
-    cart_id = Column(Integer, ForeignKey("cart.id"))
+    cart_id = Column(Integer, ForeignKey("carts.id"))
+    payment_method = Column(String, index=True)
     status = Column(String, index=True)
 
-    user = relationship("User", back_populates="orders")
+    def __init__(self, user_id: int, cart_id: int, payment_method: str, status: str):
+        self.user_id = user_id
+        self.cart_id = cart_id
+        self.payment_method = payment_method
+        self.status = status
 
-Base.metadata.create_all(bind=engine)
+        # Pydantic models
+class UserIn(BaseModel):
+    username: str
+    email: str
+    password: str
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-finally:
-    db.close()
-
-    # JWT configuration
-SECRET_KEY = "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
-
-# JWT token
-class Token(BaseModel):
-    access_token: str
-    token_type: str
-
-    # JWT token data
-class TokenData(BaseModel):
+class UserOut(BaseModel):
+    id: int
+    username: str
     email: str
 
-    # Password context
-pwd_context = CryptContext(schemes=["bcrypt"], default="bcrypt")
+class ProductIn(BaseModel):
+    name: str
+    price: float
 
-# Verify password
-def verify_password(plain_password, hashed_password):
-    return pwd_context.verify(plain_password, hashed_password)
+class ProductOut(BaseModel):
+    id: int
+    name: str
+    price: float
 
-    # Get password hash
-def get_password_hash(password):
-    return pwd_context.hash(password)
+class CartIn(BaseModel):
+    user_id: int
+    product_id: int
+    quantity: int
 
-    # Get user
-def get_user(db, email: str):
-    return db.query(User).filter(User.email == email).first()
+class CartOut(BaseModel):
+    id: int
+    user_id: int
+    product_id: int
+    quantity: int
 
-    # Authenticate user
-def authenticate_user(db, email: str, password: str):
-    user = get_user(db, email)
-    if not user:
-        return False
-    if not verify_password(password, user.password):
-        return False
-    return user
+class OrderIn(BaseModel):
+    user_id: int
+    cart_id: int
+    payment_method: str
+    status: str
 
-    # Create access token
-def create_access_token(data: dict, expires_delta: timedelta):
-    to_encode = data.copy()
-    expire = datetime.utcnow() + expires_delta
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
+class OrderOut(BaseModel):
+    id: int
+    user_id: int
+    cart_id: int
+    payment_method: str
+    status: str
 
-    # Get current user
-def get_current_user(db, token: str):
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        email: str = payload.get("email")
-        if email is None:
-            raise credentials_exception
-        token_data = TokenData(email=email)
-    except JWTError:
-        raise credentials_exception
-    user = get_user(db, email=token_data.email)
-    if user is None:
-        raise credentials_exception
-    return user
+    # Authentication
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
-    # FastAPI application
-app = FastAPI()
-
-# Dependency for getting database session
-def get_db():
+# Routes
+@app.post("/api/auth/register")
+def register(user: UserIn):
+    new_user = User(username=user.username, email=user.email, password=user.password)
     db = SessionLocal()
-    try:
-        yield db
-finally:
-    db.close()
-
-    # Dependency for getting current user
-async def get_current_active_user(db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)):
-    current_user = get_current_user(db, token)
-    if not current_user:
-        raise HTTPException(status_code=401, detail="Inactive user")
-    return current_user
-
-    # User registration endpoint
-@app.post("/api/auth/register", response_model=Token)
-async def register_user(email: str, password: str, db: Session = Depends(get_db)):
-    user = get_user(db, email)
-    if user:
-        raise HTTPException(status_code=400, detail="Email already registered")
-    hashed_password = get_password_hash(password)
-    db_user = User(email=email, password=hashed_password)
-    db.add(db_user)
+    db.add(new_user)
     db.commit()
-    db.refresh(db_user)
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(
-        data={"email": db_user.email}, expires_delta=access_token_expires
-    
-    return {
-        "access_token": access_token,
-        "token_type": "bearer",
-    
+    db.refresh(new_user)
+    return new_user
 
-        # User login endpoint
-@app.post("/api/auth/login", response_model=Token)
-async def login_user(email: str, password: str, db: Session = Depends(get_db)):
-    user = authenticate_user(db, email, password)
+@app.post("/api/auth/login")
+def login(form_data: OAuth2PasswordRequestForm = Depends()):
+    user = authenticate_user(form_data.username, form_data.password)
     if not user:
-        raise HTTPException(status_code=)))
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        
+    access_token_expires = timedelta(minutes=30)
+    access_token = create_access_token(
+        data={"sub": user.username}, expires_delta=access_token_expires
+    
+    return {"access_token": access_token, "token_type": "bearer"}
+
+@app.get("/api/products")
+def read_products():
+    db = SessionLocal()
+    products = db.query(Product).all()
+    return products
+
+@app.get("/api/products/{product_id}")
+def read_product(product_id: int):
+    db = SessionLocal()
+    product = db.query(Product).filter(Product.id == product_id).first()
+    if product is None:
+        raise HTTPException(status_code=404, detail="Product not found")
+    return product
+
+@app.post("/api/cart")
+def add_item_to_cart(cart: CartIn):
+    db = SessionLocal()
+    new_cart_item = Cart(user_id=cart.user_id, product_id=cart.product_id, quantity=cart.quantity)
+    db.add(new_cart_item)
+    db.commit()
+    db.refresh(new_cart_item)
+    return new_cart_item
+
+@app.get("/api/cart")
+def read_cart():
+    db = SessionLocal()
+    cart_items = db.query(Cart).all()
+    return cart_items
+
+@app.post("/api/orders")
+def create_order(order: OrderIn):
+    db = SessionLocal()
+    new_order = Order(user_id=order.user_id, cart_id=order.cart_id, payment_method=order.payment_method, status=order.status)
+    db.add(new_order)
+    db.commit()
+    db.refresh(new_order)
+    return new_order
+
+@app.get("/api/orders")
+def read_orders():
+    db = SessionLocal()
+    orders = db.query(Order).all()
+    return orders))
