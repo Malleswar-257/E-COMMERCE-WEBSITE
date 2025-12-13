@@ -1,0 +1,90 @@
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  text-align: center;
+  width: 100%;
+  box-sizing: border-box;
+  background-color: #e1e1eb; /* Dark elegant background */
+  color: #e0e0e011; /* Soft white text */
+}
+
+.logo {
+  height: 5.5em;
+  padding: 1.2em;
+  transition: filter 300ms ease, transform 300ms ease;
+  will-change: filter, transform;
+}
+
+.logo:hover {
+  filter: drop-shadow(0 0 1.5em #eaebeecc); /* Softer blue glow */
+  transform: scale(1.05);
+}
+
+.logo.react:hover {
+  filter: drop-shadow(0 0 1.5em #e0e8eccc); /* Classier cyan glow */
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  padding: 2rem;
+  background-color: #4d526b; /* Smooth deep blue-gray */
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(201, 18, 18, 0.3); /* Slightly stronger shadow */
+  margin: 1rem auto;
+  max-width: 600px;
+  color: #f2eaea;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 36px rgba(232, 225, 225, 0.4);
+}
+
+.read-the-docs {
+  color: #a5acc9; /* Subtle lavender-gray */
+  font-size: 0.9rem;
+  margin-top: 1rem;
+}
+
+/* Responsive enhancements */
+@media (max-width: 768px) {
+  #root {
+    padding: 1.5rem 1rem;
+  }
+
+  .logo {
+    height: 4em;
+    padding: 1em;
+  }
+
+  .card {
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .card {
+    padding: 1rem;
+    font-size: 0.95rem;
+  }
+
+  .read-the-docs {
+    font-size: 0.85rem;
+  }
+}
