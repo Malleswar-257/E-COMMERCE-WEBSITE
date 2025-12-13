@@ -515,15 +515,16 @@ npm run dev
 
 ## Features
 
-- product listing
+- user management
+- product management
 - cart management
 - order management
-- user management
+- payment gateway
 
 ## API Endpoints
 
-- `POST /api/auth/register` - User registration
 - `POST /api/auth/login` - User login
+- `POST /api/auth/register` - User registration
 - `GET /api/products` - Get all products
 - `GET /api/products/{id}` - Get product details
 - `POST /api/cart` - Add item to cart
