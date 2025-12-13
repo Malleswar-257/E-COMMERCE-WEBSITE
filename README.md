@@ -294,7 +294,7 @@ npm run dev
 
 ## Features
 
-- user authentication
+- user management
 - product management
 - cart and checkout
 - order management
@@ -302,15 +302,14 @@ npm run dev
 
 ## API Endpoints
 
-- `POST /api/register` - User registration
-- `POST /api/login` - User login
-- `GET /api/products` - Get all products
-- `GET /api/products/{id}` - Get product by id
-- `POST /api/cart` - Add item to cart
-- `GET /api/cart` - Get cart
-- `POST /api/checkout` - Complete checkout
-- `GET /api/orders` - Get all orders
-- `GET /api/orders/{id}` - Get order by id
+- `POST /api/register` - Register a new user
+- `POST /api/login` - Login a user
+- `GET /api/products` - Get a list of products
+- `GET /api/products/{id}` - Get a product by ID
+- `POST /api/cart` - Add a product to the cart
+- `POST /api/checkout` - Complete the checkout process
+- `GET /api/orders` - Get a list of orders
+- `GET /api/orders/{id}` - Get an order by ID
 
 ## License
 
