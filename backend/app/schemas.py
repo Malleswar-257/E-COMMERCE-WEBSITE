@@ -1,28 +1,25 @@
 from pydantic import BaseModel
-from datetime import datetime
-class Product(BaseModel):
-    id: int
-    name: str
-    price: float class ProductList(BaseModel):
-        products: list[Product]
-class CartItem(BaseModel):
-    product_id: int
-    quantity: int class CartItems(BaseModel):
-        cart_items: list[CartItem]
-class OrderItem(BaseModel):
-    product_id: int
-    quantity: int
-class OrderCreate(BaseModel):
-    items: list[OrderItem]
-class Order(BaseModel):
-    id: int
-    user_id: int
-    status: str
 class UserCreate(BaseModel):
-    username: str
+    name: str
+    email: str
     password: str
-    email: str class Token(BaseModel):
-        access_token: str
-    token_type: str
-class TokenData(BaseModel):
-    sub: str | None = None
+class UserUpdate(BaseModel):
+    name: str = None
+class HotelCreate(BaseModel):
+    name: str
+    address: str
+    phone: str
+    email: str
+class HotelUpdate(BaseModel):
+    name: str = None
+class BookingCreate(BaseModel):
+    user_id: int
+    hotel_id: int
+    check_in: datetime.datetime
+    check_out: datetime.datetime
+    status: str
+class BookingUpdate(BaseModel):
+    user_id: int = None
+class Token(BaseModel):
+    access_token: str
+token_type: str
