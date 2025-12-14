@@ -1,33 +1,41 @@
 from pydantic import BaseModel
 
-class UserSchema(BaseModel):
+
+class UserBase(BaseModel):
     email: str
+
+
+class UserCreate(UserBase):
     password: str
-    phone: str
+
+
+class User(UserBase):
+    id: int
 
     class Config:
         orm_mode = True
 
-class ProductSchema(BaseModel):
+
+class ProductBase(BaseModel):
     name: str
     price: float
     stock: int
 
+
+class Product(ProductBase):
+    id: int
+
     class Config:
         orm_mode = True
 
-class OrderSchema(BaseModel):
-    user_id: int
+
+class OrderBase(BaseModel):
     total: float
     status: str
 
-    class Config:
-        orm_mode = True
 
-class CartSchema(BaseModel):
-    user_id: int
-    product_id: int
-    quantity: int
+class Order(OrderBase):
+    id: int
 
     class Config:
         orm_mode = True
