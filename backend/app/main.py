@@ -1,54 +1,76 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends, HTTPException
+from fastapi.security import OAuth2PasswordBearer
 from fastapi.responses import JSONResponse
 from fastapi.requests import Request
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from fastapi.responses import JSONResponse
-from fastapi import Depends
-from fastapi import HTTPException
-from sqlalchemy import create_engine
-from sqlalchemy.orm import declarative_base
-from sqlalchemy import Column, Integer, String
-from sqlalchemy import ForeignKey
-from sqlalchemy.orm import relationship
-from sqlalchemy.ext.declarative import declarative_base
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import Column, Integer, String, Float
 from pydantic import BaseModel
-from pydantic_settings import BaseSettings
-from jose import jwt
-from passlib.context import CryptContext
-from dotenv import load_dotenv
-import os
+from typing import List, Optional
+from app.settings import settings
+from app.models import Base
 
-load_dotenv()
 
-Base = declarative_base()
+cors_origins = ["*"]
 
-engine = create_engine(os.getenv('DATABASE_URL'))
 
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+app = FastAPI(
+    title="E-commerce Platform",
+    description="A modern, scalable, full-stack e-commerce platform designed to support product listings, cart, checkout, secure payments, order management, and admin dashboards.",
+    version="1.0.0",
+    openapi_tags=[
+        {
+            "name": "users",
+            "description": "Operations on users"
+        },
+        {
+            "name": "products",
+            "description": "Operations on products"
+        },
+        {
+            "name": "cart",
+            "description": "Operations on cart"
+        },
+        {
+            "name": "orders",
+            "description": "Operations on orders"
+        }
+    ]
+)
 
-class Settings(BaseSettings):
-    DATABASE_URL: str = 'sqlite:///./app.db'
-    SECRET_KEY: str = 'dev-secret-key-change-in-production'
-    ALGORITHM: str = 'HS256'
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
-settings = Settings()
+origins = [
+    "*"
+]
 
-pwd_context = CryptContext(schemes=['bcrypt'], default='bcrypt')
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl='login')
-
-from fastapi.middleware.cors import CORSMiddleware
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
-    allow_credentials=True,
+    allow_origins = origins,
+    allow_credentials = True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-app = FastAPI()
 
+engine = create_engine(settings.DATABASE_URL)
+SessionLocal = sessionmaker(autocommit = False, autoflush = False, bind = engine)
+Base.metadata.create_all(bind = engine)
+
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+
+
+@app.post("/login")
+async def login(request: Request):
+    form_data = await request.form()
+    email = form_data.get("email")
+    password = form_data.get("password")
+    db = SessionLocal()
+    user = db.query(User).filter(User.email == email).first()
+    if user and user.verify_password(password):
+        return JSONResponse(content={"token": user.email})
+else:
+    raise HTTPException(status_code=401, detail="Invalid email or password")
