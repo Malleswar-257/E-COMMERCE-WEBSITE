@@ -294,23 +294,36 @@ npm run dev
 
 ## Features
 
-- user management
-- product management
-- cart and checkout
-- payments
-- orders
+- Sign up, login, logout
+- Browsing products
+- Categories & filters
+- Search system
+- Product details page
+- Add to cart
+- Checkout
+- Online payments
+- Order tracking
+- Wishlist
+- Ratings & reviews
+- Product management (CRUD)
+- Inventory management
+- Discount & coupon management
+- Order management
+- User management
+- Dashboard analytics
 
 ## API Endpoints
 
 - `POST /api/register` - Register a new user
-- `POST /api/login` - Login a user
+- `POST /api/login` - Login an existing user
 - `GET /api/products` - Get all products
-- `GET /api/products/:id` - Get a product by ID
+- `GET /api/products/{id}` - Get a product by id
 - `POST /api/cart` - Add a product to cart
-- `GET /api/cart` - Get cart contents
-- `POST /api/checkout` - Complete secure checkout
+- `GET /api/cart` - Get cart details
+- `POST /api/checkout` - Complete checkout
 - `GET /api/orders` - Get all orders
-- `GET /api/orders/:id` - Get an order by ID
+- `GET /api/orders/{id}` - Get an order by id
+- `POST /api/admin/products` - Create a new product
 
 ## License
 
