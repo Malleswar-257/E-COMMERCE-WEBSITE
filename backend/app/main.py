@@ -1,8 +1,9 @@
 from fastapi import FastAPI
-from app.config import settings
+from dotenv import load_dotenv
 from app.routes import router
-from app.database import database
+from app.database import engine
 
+load_dotenv()
 from fastapi.middleware.cors import CORSMiddleware
 
 app.add_middleware(
