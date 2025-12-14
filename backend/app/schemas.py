@@ -1,25 +1,33 @@
 from pydantic import BaseModel
-class UserCreate(BaseModel):
-    name: str
+
+class UserSchema(BaseModel):
     email: str
     password: str
-class UserUpdate(BaseModel):
-    name: str = None
-class HotelCreate(BaseModel):
-    name: str
-    address: str
     phone: str
-    email: str
-class HotelUpdate(BaseModel):
-    name: str = None
-class BookingCreate(BaseModel):
+
+    class Config:
+        orm_mode = True
+
+class ProductSchema(BaseModel):
+    name: str
+    price: float
+    stock: int
+
+    class Config:
+        orm_mode = True
+
+class OrderSchema(BaseModel):
     user_id: int
-    hotel_id: int
-    check_in: datetime.datetime
-    check_out: datetime.datetime
+    total: float
     status: str
-class BookingUpdate(BaseModel):
-    user_id: int = None
-class Token(BaseModel):
-    access_token: str
-token_type: str
+
+    class Config:
+        orm_mode = True
+
+class CartSchema(BaseModel):
+    user_id: int
+    product_id: int
+    quantity: int
+
+    class Config:
+        orm_mode = True
