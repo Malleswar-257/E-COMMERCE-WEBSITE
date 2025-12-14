@@ -2,45 +2,53 @@ from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from fastapi.requests import Request
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from fastapi import status
-from fastapi import HTTPException
 from fastapi import Depends
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi import HTTPException
+from sqlalchemy import create_engine
+from sqlalchemy.orm import declarative_base
+from sqlalchemy import Column, Integer, String
+from sqlalchemy import ForeignKey
+from sqlalchemy.orm import relationship
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 from pydantic import BaseModel
-from typing import List
-from app.database import engine
-from app.database import SessionLocal
-from app.database import Base
-from app.database import User
-from app.database import Product
-from app.database import Cart
-from app.database import Order
-from app.database import OrderItem
-from app.auth import AuthHandler
-from app.auth import get_user
-from app.auth import get_current_user
-from app.auth import get_current_active_user
-from app.auth import get_current_active_admin
-from app.crud import crud
-from app.schemas import schemas
-from app.utils import utils
+from pydantic_settings import BaseSettings
+from jose import jwt
+from passlib.context import CryptContext
+from dotenv import load_dotenv
+import os
 
-app = FastAPI()
+load_dotenv()
 
-origins = [
-    "*"
-]
+Base = declarative_base()
 
-cors = CORSMiddleware(
-    app,
-    allow_origins=origins,
+engine = create_engine(os.getenv('DATABASE_URL'))
+
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+class Settings(BaseSettings):
+    DATABASE_URL: str = 'sqlite:///./app.db'
+    SECRET_KEY: str = 'dev-secret-key-change-in-production'
+    ALGORITHM: str = 'HS256'
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+
+settings = Settings()
+
+pwd_context = CryptContext(schemes=['bcrypt'], default='bcrypt')
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl='login')
+
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-@app.get("/")
-async def root():
-    return {"message": "Welcome to the E-COMMERCE-WEBSITE API!"}, 
+app = FastAPI()
+
