@@ -1,17 +1,15 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime, Enum
+from sqlalchemy import Column, Integer, String, Float, ForeignKey
 from sqlalchemy.orm import relationship
-from pydantic import BaseModel
-from app.database import Base
+from app.main import Base
 
 class User(Base):
-    __tablename__ = "users"
-
+    __tablename__ = 'users'
     id = Column(Integer, primary_key=True)
     email = Column(String, unique=True)
     password = Column(String)
     phone = Column(String)
-
     orders = relationship("Order", backref="user")
+    cart = relationship("Cart", backref="user")
 
     def __init__(self, email, password, phone):
         self.email = email
@@ -19,14 +17,12 @@ class User(Base):
         self.phone = phone
 
 class Product(Base):
-    __tablename__ = "products"
-
+    __tablename__ = 'products'
     id = Column(Integer, primary_key=True)
     name = Column(String)
     price = Column(Float)
     stock = Column(Integer)
-
-    carts = relationship("Cart", backref="product")
+    cart = relationship("Cart", backref="product")
 
     def __init__(self, name, price, stock):
         self.name = name
@@ -34,52 +30,25 @@ class Product(Base):
         self.stock = stock
 
 class Order(Base):
-    __tablename__ = "orders"
-
+    __tablename__ = 'orders'
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
-    status = Column(Enum("pending", "shipped", "delivered"))
+    user_id = Column(Integer, ForeignKey('users.id'))
     total = Column(Float)
+    status = Column(String)
 
-    user = relationship("User", backref="orders")
-
-    def __init__(self, user_id, status, total):
+    def __init__(self, user_id, total, status):
         self.user_id = user_id
-        self.status = status
         self.total = total
+        self.status = status
 
 class Cart(Base):
-    __tablename__ = "carts"
-
+    __tablename__ = 'cart'
     id = Column(Integer, primary_key=True)
-    product_id = Column(Integer, ForeignKey("products.id"))
+    user_id = Column(Integer, ForeignKey('users.id'))
+    product_id = Column(Integer, ForeignKey('products.id'))
     quantity = Column(Integer)
 
-    product = relationship("Product", backref="carts")
-
-    def __init__(self, product_id, quantity):
+    def __init__(self, user_id, product_id, quantity):
+        self.user_id = user_id
         self.product_id = product_id
         self.quantity = quantity
-
-class UserSchema(BaseModel):
-    id: int
-    email: str
-    password: str
-    phone: str
-
-class ProductSchema(BaseModel):
-    id: int
-    name: str
-    price: float
-    stock: int
-
-class OrderSchema(BaseModel):
-    id: int
-    user_id: int
-    status: str
-    total: float
-
-class CartSchema(BaseModel):
-    id: int
-    product_id: int
-    quantity: int
