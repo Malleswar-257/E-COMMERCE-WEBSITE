@@ -6,32 +6,22 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, scoped_session
 from sqlalchemy.orm.session import sessionmaker
-from pydantic import BaseModel
-from jose import jwt
-from passlib.context import CryptContext
-from dotenv import load_dotenv
-from os import getenv
-
-load_dotenv()
+from pydantic_settings import BaseSettings
+from app.config import settings
+from app.models import User, Product, Order, Cart
+from app.routes import user_router, product_router, order_router, cart_router
 
 app = FastAPI()
 
-origins = [
-    "*",
-]
-
-cors = CORSMiddleware(
-    app,
-    allow_origins=origins,
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-engine = create_engine(getenv('DATABASE_URL'))
-Base = declarative_base()
-Session = scoped_session(sessionmaker(bind=engine))
-
-pwd_context = CryptContext(schemes=["bcrypt"], default="bcrypt")
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+app.include_router(user_router)
+app.include_router(product_router)
+app.include_router(order_router)
+app.include_router(cart_router)
