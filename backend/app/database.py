@@ -1,8 +1,8 @@
 from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
-db_url = settings.DATABASE_URL
-echo = False
-engine = create_engine(db_url, connect_args={}, echo=echo)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+from sqlalchemy.orm import declarative_base, scoped_session
+from sqlalchemy.orm.session import sessionmaker
+from app.settings import Settings
+
+engine = create_engine(Settings().DATABASE_URL)
 Base = declarative_base()
+database = scoped_session(sessionmaker(bind=engine))
