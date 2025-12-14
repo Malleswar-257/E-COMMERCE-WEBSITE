@@ -1,48 +1,53 @@
-from fastapi import APIRouter, Depends
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.responses import JSONResponse
-from app.main import oauth2_scheme, pwd_context
-from app.models import User, Product, Order, Cart
-from app.schemas import UserSchema, ProductSchema, OrderSchema, CartSchema
+from fastapi import FastAPI
+from fastapi.requests import Request
 from sqlalchemy.orm import Session
+from app import crud, models, schemas
+from app.database import SessionLocal, engine
+from app.models import User, Product, Order
+from app.schemas import UserCreate, User, ProductBase, Product, OrderBase, Order
+from app.utils import get_user, get_token, get_password_hash, verify_password
 from jose import jwt
 from passlib.context import CryptContext
+from pydantic import BaseModel
+from pydantic_settings import BaseSettings
 from dotenv import load_dotenv
-from os import getenv
+import os
 
 load_dotenv()
 
 router = APIRouter()
 
-@router.post("/register")
-def register(user: UserSchema):
-    user_obj = User(email=user.email, password=pwd_context.hash(user.password), phone=user.phone)
-    Session.add(user_obj)
-    Session.commit()
-    return JSONResponse(content={"token": jwt.encode({"sub": user.email}, getenv('SECRET_KEY'), algorithm="HS256")}, media_type="application/json")
 
-@router.post("/login")
-def login(form_data: OAuth2PasswordRequestForm = Depends()):
-    user = Session.query(User).filter(User.email == form_data.username).first()
+@router.post('/register', response_model=schemas.User)
+async def create_user(user: schemas.UserCreate):
+    db_user = crud.get_user_by_email(db, email=user.email)
+    if db_user:
+        raise HTTPException(status_code=400, detail='Email already registered')
+    return crud.create_user(db=db, user=user)
+
+
+@router.post('/login', response_model=schemas.Token)
+async def login(form_data: OAuth2PasswordRequestForm = Depends()):
+    user = authenticate_user(form_data.username, form_data.password)
     if not user:
-        return JSONResponse(content={"error": "Invalid email or password"}, media_type="application/json", status_code=401)
-    if not pwd_context.verify(form_data.password, user.password):
-        return JSONResponse(content={"error": "Invalid email or password"}, media_type="application/json", status_code=401)
-    return JSONResponse(content={"token": jwt.encode({"sub": user.email}, getenv('SECRET_KEY'), algorithm="HS256")}, media_type="application/json")
+        raise HTTPException(status_code=401, detail='Incorrect username or password')
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(data={'sub': user.email}, expires_delta=access_token_expires)
+    return {'access_token': access_token, 'token_type': 'bearer'}
 
-@router.get("/products")
-def get_products(token: str = Depends(oauth2_scheme)):
-    products = Session.query(Product).all()
-    return JSONResponse(content=[ProductSchema.from_orm(product).dict() for product in products], media_type="application/json")
 
-@router.get("/products/{id}")
-def get_product(id: int, token: str = Depends(oauth2_scheme)):
-    product = Session.query(Product).filter(Product.id == id).first()
-    if not product:
-        return JSONResponse(content={"error": "Product not found"}, media_type="application/json", status_code=404)
-    return JSONResponse(content=ProductSchema.from_orm(product).dict(), media_type="application/json")
+@router.get('/products/', response_model=List[schemas.Product])
+async def read_products(db: Session = Depends(get_db)):
+    products = crud.get_products(db)
+    return products
 
-@router.post("/cart")
-def add_to_cart(cart: CartSchema, token: str = Depends(oauth2_scheme)):
-    user = Session.query(User).filter(User.email == jwt.decode(token, getenv('}
-)))
+
+@router.get('/products/{product_id}', response_model=schemas.Product)
+async def read_product(product_id: int, db: Session = Depends(get_db)):
+    product = crud.get_product(db, product_id=product_id)
+    if product is None:
+        pass
+        
