@@ -299,18 +299,18 @@ npm run dev
 - cart and checkout
 - secure payments
 - order management
-- admin dashboard
 
 ## API Endpoints
 
-- `POST /api/register` - User registration endpoint
-- `POST /api/login` - User login endpoint
-- `GET /api/products` - Product listing endpoint
-- `GET /api/products/{id}` - Product details endpoint
-- `POST /api/cart` - Add product to cart endpoint
-- `POST /api/checkout` - Complete secure checkout endpoint
-- `GET /api/orders` - Order history endpoint
-- `GET /api/orders/{id}` - Order details endpoint
+- `POST /api/register` - Register a new user
+- `POST /api/login` - Log in a user
+- `GET /api/products` - Get all products
+- `GET /api/products/:id` - Get a product by ID
+- `POST /api/cart` - Add an item to cart
+- `GET /api/cart` - Get cart items
+- `POST /api/checkout` - Complete checkout
+- `GET /api/orders` - Get all orders
+- `GET /api/orders/:id` - Get an order by ID
 
 ## License
 
