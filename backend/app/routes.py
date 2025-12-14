@@ -1,67 +1,42 @@
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from pydantic import BaseModel
-from app.models import User, Product, Order, Cart
 from app.config import settings
+from app.database import database
+from app.models import User, Product, Cart, Order
 
 router = APIRouter()
 
-@router.post("/register")
-def register(user: User):
-# implement registration logic
-    return {"token": "token"}
+@router.post("/api/register")
+def register_user(user: User):
+# Implement user registration
 
-@router.post("/login")
-def login(form_data: OAuth2PasswordRequestForm = Depends()):
-# implement login logic
-    return {"token": "token"}
+@router.post("/api/login")
+def login_user(user: User):
+# Implement user login
 
-@router.get("/products")
+@router.get("/api/products")
 def get_products():
-# implement get products logic
-    return []
+# Implement product retrieval
 
-@router.get("/products/{id}")
+@router.get("/api/products/{id}")
 def get_product(id: int):
-# implement get product logic
-    return {}
+# Implement product retrieval by ID
 
-@router.post("/cart")
-def add_to_cart(product_id: int, quantity: int):
-# implement add to cart logic
-    return {"cart_id": 1, }
+@router.post("/api/cart")
+def add_to_cart(cart: Cart):
+# Implement cart addition
 
-@router.get("/cart")
+@router.get("/api/cart")
 def get_cart():
-# implement get cart logic
-    return []
+# Implement cart retrieval
 
-@router.post("/checkout")
-def checkout(cart_id: int, payment_method: str):
-# implement checkout logic
-    return {"order_id": 1, }
+@router.post("/api/checkout")
+def checkout(order: Order):
+# Implement checkout
 
-@router.get("/orders")
+@router.get("/api/orders")
 def get_orders():
-# implement get orders logic
-    return []
+# Implement order retrieval
 
-@router.get("/orders/{id}")
+@router.get("/api/orders/{id}")
 def get_order(id: int):
-# implement get order logic
-    return {}
-
-@router.post("/admin/products")
-def create_product(name: str, price: float, stock: int, rating: float):
-# implement create product logic
-    return {"product_id": 1, }
-
-@router.get("/admin/products")
-def get_products_admin():
-# implement get products admin logic
-    return []
-
-@router.get("/admin/orders")
-def get_orders_admin():
-# implement get orders admin logic
-    return [], 
+# Implement order retrieval by ID
