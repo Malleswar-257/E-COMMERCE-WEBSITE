@@ -1,53 +1,67 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from fastapi.responses import JSONResponse
-from fastapi.requests import Request
-from fastapi.exceptions import HTTPException
-from app.database import database
+from pydantic import BaseModel
 from app.models import User, Product, Order, Cart
-from app.auth import get_current_user
+from app.config import settings
 
-user_router = APIRouter()
-product_router = APIRouter()
-order_router = APIRouter()
-cart_router = APIRouter()
-admin_router = APIRouter()
+router = APIRouter()
 
-@user_router.post("/api/register")
-def register_user(user: UserSchema):
-    user = User(**user.dict())
-    database.add(user)
-    database.commit()
-    return JSONResponse(content={"message": "User created successfully"}, status_code=201)
+@router.post("/register")
+def register(user: User):
+# implement registration logic
+    return {"token": "token"}
 
-@user_router.post("/api/login")
-def login_user(user: UserSchema):
-    user = database.query(User).filter(User.email == user.email).first()
-    if user and user.password == user.password:
-        return JSONResponse(content={"token": "token", "user_id": user.id}, status_code=200)
-else:
-    raise HTTPException(status_code=401, detail="Invalid email or password")
+@router.post("/login")
+def login(form_data: OAuth2PasswordRequestForm = Depends()):
+# implement login logic
+    return {"token": "token"}
 
-@product_router.get("/api/products")
+@router.get("/products")
 def get_products():
-    products = database.query(Product).all()
-    return JSONResponse(content=[product.__dict__ for product in products], status_code=200)
+# implement get products logic
+    return []
 
-@product_router.get("/api/products/{product_id}")
-def get_product(product_id: int):
-    product = database.query(Product).filter(Product.id == product_id).first()
-    if product:
-        return JSONResponse(content=product.__dict__, status_code=200)
-else:
-    raise HTTPException(status_code=404, detail="Product not found")
+@router.get("/products/{id}")
+def get_product(id: int):
+# implement get product logic
+    return {}
 
-@cart_router.post("/api/products/{product_id}/add-to-cart")
+@router.post("/cart")
 def add_to_cart(product_id: int, quantity: int):
-    cart = Cart(product_id=product_id, quantity=quantity)
-    database.add(cart)
-    database.commit()
-    return JSONResponse(content={"cart_id": cart.id, "product_id": product_id, "quantity": quantity}, status_code=201)
+# implement add to cart logic
+    return {"cart_id": 1, }
 
-@order_router.post("/api/checkout")
-def checkout(order: OrderSchema):
-    order = Order(**order.dict())
+@router.get("/cart")
+def get_cart():
+# implement get cart logic
+    return []
+
+@router.post("/checkout")
+def checkout(cart_id: int, payment_method: str):
+# implement checkout logic
+    return {"order_id": 1, }
+
+@router.get("/orders")
+def get_orders():
+# implement get orders logic
+    return []
+
+@router.get("/orders/{id}")
+def get_order(id: int):
+# implement get order logic
+    return {}
+
+@router.post("/admin/products")
+def create_product(name: str, price: float, stock: int, rating: float):
+# implement create product logic
+    return {"product_id": 1, }
+
+@router.get("/admin/products")
+def get_products_admin():
+# implement get products admin logic
+    return []
+
+@router.get("/admin/orders")
+def get_orders_admin():
+# implement get orders admin logic
+    return [], 
