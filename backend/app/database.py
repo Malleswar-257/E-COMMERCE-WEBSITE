@@ -1,8 +1,7 @@
 from sqlalchemy import create_engine
-from sqlalchemy.orm import declarative_base, scoped_session
-from sqlalchemy.orm.session import sessionmaker
-from app.settings import Settings
+from sqlalchemy.orm import sessionmaker
+from app.config import settings
 
-engine = create_engine(Settings().DATABASE_URL)
-Base = declarative_base()
-database = scoped_session(sessionmaker(bind=engine))
+engine = create_engine(settings.DATABASE_URL)
+Session = sessionmaker(bind=engine)
+database = Session()
