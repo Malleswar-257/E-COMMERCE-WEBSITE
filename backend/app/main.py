@@ -1,9 +1,21 @@
-from fastapi import FastAPI, Depends, HTTPException, status, Request
+from fastapi import FastAPI
+from fastapi.responses import JSONResponse
+from fastapi.requests import Request
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from sqlalchemy.orm import Session
-from pydantic_settings import BaseSettings
-from app import crud, schemas, models
-db = SessionLocal()
+from fastapi.responses import JSONResponse
+from fastapi import Depends
+from sqlalchemy import create_engine
+from sqlalchemy.orm import declarative_base
+from sqlalchemy import Column, Integer, String, Float
+from pydantic import BaseModel
+from typing import Optional
+from jose import jwt
+from passlib.context import CryptContext
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
 from fastapi.middleware.cors import CORSMiddleware
 
 app.add_middleware(
@@ -15,92 +27,134 @@ app.add_middleware(
 )
 
 app = FastAPI()
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
-class Settings(BaseSettings):
-    DATABASE_URL: str = "postgresql://user:password@localhost/dbname"
-    SECRET_KEY: str = "your-secret-key"
-    ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
-settings = Settings()
-def get_db():
-    try:
-        except Exception as e:
-            pass
-        db = SessionLocal()
-        yield db
-finally:
-    db.close()
-@app.post("/api/users", response_model=schemas.User)
-def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    return crud.create_user(db=db, user=user)
-@app.get("/api/users", response_model=list[schemas.User])
-def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    users = crud.get_users(db=db, skip=skip, limit=limit)
-    return users
-@app.get("/api/users/{user_id}", response_model=schemas.User)
-def read_user(user_id: int, db: Session = Depends(get_db)):
-    user = crud.get_user(db=db, user_id=user_id)
+
+engine = create_engine(os.getenv('DATABASE_URL'))
+Base = declarative_base()
+
+# Authentication
+pwd_context = CryptContext(schemes=["bcrypt"], default="bcrypt")
+
+# JWT Settings
+SECRET_KEY = os.getenv('SECRET_KEY')
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
+# Models
+class User(Base):
+    __tablename__ = 'users'
+    id = Column(Integer, primary_key=True)
+    email = Column(String, unique=True, nullable=False)
+    phone = Column(String, unique=True, nullable=False)
+    password = Column(String, nullable=False)
+
+class Product(Base):
+    __tablename__ = 'products'
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    price = Column(Float, nullable=False)
+    stock = Column(Integer, nullable=False)
+    rating = Column(Float, nullable=False)
+
+class Order(Base):
+    __tablename__ = 'orders'
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, nullable=False)
+    total = Column(Float, nullable=False)
+    status = Column(String, nullable=False)
+
+    # Schemas
+class UserSchema(BaseModel):
+    email: str
+    phone: str
+    password: str
+
+class ProductSchema(BaseModel):
+    name: str
+    price: float
+    stock: int
+    rating: float
+
+class OrderSchema(BaseModel):
+    user_id: int
+    total: float
+    status: str
+
+    # Routes
+@app.post("/api/register")
+def register(user: UserSchema):
+    hashed_password = pwd_context.hash(user.password)
+    new_user = User(email=user.email, phone=user.phone, password=hashed_password)
+    Base.metadata.create_all(engine)
+    session = Session(bind=engine)
+    session.add(new_user)
+    session.commit()
+    return JSONResponse(content={"token": create_access_token(user.email)}, status_code=201)
+
+@app.post("/api/login")
+def login(form_data: OAuth2PasswordRequestForm = Depends()):
+    user = get_user(form_data.username)
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        return JSONResponse(content={"error": "Invalid username or password"}, status_code=401)
+    if not pwd_context.verify(form_data.password, user.password):
+        return JSONResponse(content={"error": "Invalid username or password"}, status_code=401)
+    return JSONResponse(content={"token": create_access_token(user.email)}, status_code=200)
+
+@app.get("/api/products")
+def get_products():
+    session = Session(bind=engine)
+    products = session.query(Product).all()
+    return JSONResponse(content=[product.__dict__ for product in products], status_code=200)
+
+@app.get("/api/products/{product_id}")
+def get_product(product_id: int):
+    session = Session(bind=engine)
+    product = session.query(Product).filter(Product.id == product_id).first()
+    if not product:
+        return JSONResponse(content={"error": "Product not found"}, status_code=404)
+    return JSONResponse(content=product.__dict__, status_code=200)
+
+@app.post("/api/cart")
+def add_to_cart(product_id: int, quantity: int):
+    session = Session(bind=engine)
+    product = session.query(Product).filter(Product.id == product_id).first()
+    if not product:
+        return JSONResponse(content={"error": "Product not found"}, status_code=404)
+        # Add to cart logic
+    return JSONResponse(content={"message": "Product added to cart"}, status_code=200)
+
+@app.post("/api/checkout")
+def checkout(payment_method: str, address: str):
+    session = Session(bind=engine)
+    # Checkout logic
+    return JSONResponse(content={"message": "Order created"}, status_code=200)
+
+@app.get("/api/orders")
+def get_orders():
+    session = Session(bind=engine)
+    orders = session.query(Order).all()
+    return JSONResponse(content=[order.__dict__ for order in orders], status_code=200)
+
+@app.get("/api/orders/{order_id}")
+def get_order(order_id: int):
+    session = Session(bind=engine)
+    order = session.query(Order).filter(Order.id == order_id).first()
+    if not order:
+        return JSONResponse(content={"error": "Order not found"}, status_code=404)
+    return JSONResponse(content=order.__dict__, status_code=200)
+
+    # Helper functions
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+else:
+    expire = datetime.utcnow() + timedelta(minutes=15)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+
+def get_user(username: str):
+    session = Session(bind=engine)
+    user = session.query(User).filter(User.email == username).first()
     return user
-@app.put("/api/users/{user_id}", response_model=schemas.User)
-def update_user(user_id: int, user: schemas.UserUpdate, db: Session = Depends(get_db)):
-    return crud.update_user(db=db, user_id=user_id, user=user)
-@app.delete("/api/users/{user_id}")
-def delete_user(user_id: int, db: Session = Depends(get_db)):
-    crud.delete_user(db=db, user_id=user_id)
-@app.post("/api/hotels", response_model=schemas.Hotel)
-def create_hotel(hotel: schemas.HotelCreate, db: Session = Depends(get_db)):
-    return crud.create_hotel(db=db, hotel=hotel)
-@app.get("/api/hotels", response_model=list[schemas.Hotel])
-def read_hotels(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    hotels = crud.get_hotels(db=db, skip=skip, limit=limit)
-    return hotels
-@app.get("/api/hotels/{hotel_id}", response_model=schemas.Hotel)
-def read_hotel(hotel_id: int, db: Session = Depends(get_db)):
-    hotel = crud.get_hotel(db=db, hotel_id=hotel_id)
-    if not hotel:
-        raise HTTPException(status_code=404, detail="Hotel not found")
-    return hotel
-@app.put("/api/hotels/{hotel_id}", response_model=schemas.Hotel)
-def update_hotel(hotel_id: int, hotel: schemas.HotelUpdate, db: Session = Depends(get_db)):
-    return crud.update_hotel(db=db, hotel_id=hotel_id, hotel=hotel)
-@app.delete("/api/hotels/{hotel_id}")
-def delete_hotel(hotel_id: int, db: Session = Depends(get_db)):
-    crud.delete_hotel(db=db, hotel_id=hotel_id)
-@app.post("/api/bookings", response_model=schemas.Booking)
-def create_booking(booking: schemas.BookingCreate, db: Session = Depends(get_db)):
-    return crud.create_booking(db=db, booking=booking)
-@app.get("/api/bookings", response_model=list[schemas.Booking])
-def read_bookings(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    bookings = crud.get_bookings(db=db, skip=skip, limit=limit)
-    return bookings
-@app.get("/api/bookings/{booking_id}", response_model=schemas.Booking)
-def read_booking(booking_id: int, db: Session = Depends(get_db)):
-    booking = crud.get_booking(db=db, booking_id=booking_id)
-    if not booking:
-        raise HTTPException(status_code=404, detail="Booking not found")
-    return booking
-@app.put("/api/bookings/{booking_id}", response_model=schemas.Booking)
-def update_booking(booking_id: int, booking: schemas.BookingUpdate, db: Session = Depends(get_db)):
-    return crud.update_booking(db=db, booking_id=booking_id, booking=booking)
-@app.delete("/api/bookings/{booking_id}")
-def delete_booking(booking_id: int, db: Session = Depends(get_db)):
-    crud.delete_booking(db=db, booking_id=booking_id)
-@app.post("/api/login", response_model=schemas.Token)
-def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    user = crud.authenticate_user(db, form_data.username, form_data.password)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(
-        data={"sub": user.email}, expires_delta=access_token_expires
-    )
-    return {"access_token": access_token, "token_type": "bearer"}
-@app.get("/api/logout")
-def logout(token: str = Depends(oauth2_scheme)):
-    return {}
