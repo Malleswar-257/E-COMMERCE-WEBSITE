@@ -1,36 +1,32 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Float, DateTime, relationship
+from sqlalchemy import Column, Integer, String, DateTime, Enum
 from sqlalchemy.ext.declarative import declarative_base
-Base = declarative_base()
-class Product(Base):
-    __tablename__ = "products"
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, index=True)
-    price = Column(Float)
+def get_db():
+    db = SessionLocal()
+    try:
+        except Exception as e:
+            pass
+        yield db
+finally:
+    db.close()
 class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, index=True)
-    username = Column(String, unique=True, index=True)
-    password = Column(String)
+    name = Column(String, index=True)
     email = Column(String, unique=True, index=True)
-class Order(Base):
-    __tablename__ = "orders"
+    password = Column(String)
+    role = Column(Enum('admin', 'user'))
+class Hotel(Base):
+    __tablename__ = "hotels"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, index=True)
+    address = Column(String, index=True)
+    phone = Column(String, index=True)
+    email = Column(String, index=True)
+class Booking(Base):
+    __tablename__ = "bookings"
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"))
-    status = Column(String)
-    order_items = relationship("OrderItem", back_populates="order")
-class OrderItem(Base):
-    __tablename__ = "order_items"
-    id = Column(Integer, primary_key=True, index=True)
-    order_id = Column(Integer, ForeignKey("orders.id"), index=True)
-    product_id = Column(Integer, ForeignKey("products.id"))
-    quantity = Column(Integer)
-class Cart(Base):
-    __tablename__ = "carts"
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
-class CartItem(Base):
-    __tablename__ = "cart_items"
-    id = Column(Integer, primary_key=True, index=True)
-    cart_id = Column(Integer, ForeignKey("carts.id"), index=True)
-    product_id = Column(Integer, ForeignKey("products.id"))
-    quantity = Column(Integer)
+    hotel_id = Column(Integer, ForeignKey("hotels.id"))
+    check_in = Column(DateTime)
+    check_out = Column(DateTime)
+    status = Column(Enum('pending', 'confirmed', 'cancelled'))
