@@ -295,21 +295,22 @@ npm run dev
 ## Features
 
 - product management
-- cart management
 - order management
-- payment gateway
+- cart management
+- checkout
+- payment processing
 
 ## API Endpoints
 
 - `POST /api/register` - Register a new user.
-- `POST /api/login` - Login a user.
+- `POST /api/login` - Login an existing user.
 - `GET /api/products` - Get all products.
-- `GET /api/products/{id}` - Get a product by ID.
-- `POST /api/cart` - Add an item to cart.
-- `GET /api/cart` - Get cart items.
-- `POST /api/checkout` - Complete secure checkout.
+- `GET /api/products/{id}` - Get a product by id.
+- `POST /api/cart` - Add a product to the cart.
+- `GET /api/cart` - Get the cart.
+- `POST /api/checkout` - Checkout.
 - `GET /api/orders` - Get all orders.
-- `GET /api/orders/{id}` - Get an order by ID.
+- `GET /api/orders/{id}` - Get an order by id.
 
 ## License
 
