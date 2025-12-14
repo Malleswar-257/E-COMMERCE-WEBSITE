@@ -297,17 +297,19 @@ npm run dev
 - user management
 - product management
 - cart and checkout
+- payments
 - orders
 - admin dashboard
 
 ## API Endpoints
 
 - `POST /api/register` - Register a new user
-- `POST /api/login` - Login an existing user
+- `POST /api/login` - Log in a user
 - `GET /api/products` - Get all products
 - `GET /api/products/{id}` - Get a product by ID
 - `POST /api/cart` - Add an item to cart
-- `POST /api/checkout` - Complete secure checkout
+- `GET /api/cart` - Get cart items
+- `POST /api/checkout` - Complete checkout
 - `GET /api/orders` - Get all orders
 - `GET /api/orders/{id}` - Get an order by ID
 
