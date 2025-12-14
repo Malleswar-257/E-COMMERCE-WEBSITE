@@ -1,7 +1,5 @@
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from app.config import settings
+from app.models import Base
 
-engine = create_engine(settings.DATABASE_URL)
-Session = sessionmaker(bind=engine)
-database = Session()
+engine = create_engine('postgresql://user:password@host:port/dbname')
+Base.metadata.create_all(engine)
