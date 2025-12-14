@@ -294,20 +294,22 @@ npm run dev
 
 ## Features
 
-- No features specified
+- user management
+- product management
+- cart and checkout
+- orders
+- admin dashboard
 
 ## API Endpoints
 
-- `POST /api/register` - Register a new user.
-- `POST /api/login` - Login an existing user.
-- `GET /api/products` - Get a list of all products.
-- `GET /api/products/:id` - Get a specific product by ID.
-- `POST /api/cart` - Add an item to the cart.
-- `GET /api/cart` - Get the current cart.
-- `DELETE /api/cart/:id` - Remove an item from the cart.
-- `POST /api/checkout` - Complete a secure checkout.
-- `GET /api/orders` - Get a list of all orders.
-- `GET /api/orders/:id` - Get a specific order by ID.
+- `POST /api/register` - Register a new user
+- `POST /api/login` - Login an existing user
+- `GET /api/products` - Get all products
+- `GET /api/products/{id}` - Get a product by ID
+- `POST /api/cart` - Add an item to cart
+- `POST /api/checkout` - Complete secure checkout
+- `GET /api/orders` - Get all orders
+- `GET /api/orders/{id}` - Get an order by ID
 
 ## License
 
