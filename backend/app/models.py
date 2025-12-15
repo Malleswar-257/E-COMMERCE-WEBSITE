@@ -1,43 +1,39 @@
-from app.database import Base, engine
-from sqlalchemy import Column, Integer, String, Float, ForeignKey
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, Integer, String, Float
+from sqlalchemy.ext.declarative import declarative_base
 
+Base = declarative_base()
 
 class User(Base):
-    __tablename__ = "users"
-
-    id = Column(Integer, primary_key=True, index=True)
-    email = Column(String, index=True)
-    phone = Column(String, index=True)
+    __tablename__ = 'users'
+    id = Column(Integer, primary_key = True)
+    email = Column(String, unique = True)
     password = Column(String)
 
+    def __init__(self, email, password):
+        self.email = email
+        self.password = password
 
 class Product(Base):
-    __tablename__ = "products"
+    __tablename__ = 'products'
+    id = Column(Integer, primary_key = True)
+    name = Column(String)
+    price = Column(Float)
+    stock = Column(Integer)
 
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, index=True)
-    price = Column(Float, index=True)
-    stock = Column(Integer, index=True)
-    rating = Column(Float, index=True)
-
+    def __init__(self, name, price, stock):
+        self.name = name
+        self.price = price
+        self.stock = stock
 
 class Order(Base):
-    __tablename__ = "orders"
+    __tablename__ = 'orders'
+    id = Column(Integer, primary_key = True)
+    status = Column(String)
+    total = Column(Float)
 
-    id = Column(Integer, primary_key=True, index=True)
-    status = Column(String, index=True)
-    total = Column(Float, index=True)
+    def __init__(self, status, total):
+        self.status = status
+        self.total = total
 
-    cart = relationship("Cart", backref="order")
-
-
-class Cart(Base):
-    __tablename__ = "cart"
-
-    id = Column(Integer, primary_key=True, index=True)
-    product_id = Column(Integer, ForeignKey("products.id"))
-    quantity = Column(Integer, index=True)
-
-    product = relationship("Product", backref="cart")
-    order = relationship("Order", backref="cart")
+class Payment(Base):
+    __tablename__
