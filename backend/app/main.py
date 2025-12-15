@@ -1,48 +1,21 @@
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from fastapi.requests import Request
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
-from app.models import User, Product, Order, Cart
-from app.database import engine, SessionLocal
-from app.routers import auth, products, orders, admin
-from app.settings import Settings
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.exceptions import HTTPException
+from pydantic import BaseModel
+from typing import List, Optional
+import uvicorn
+import os
+import sqlite3
+from app.config import settings
+from app.database import engine
+from app.routers import auth, cart, orders, products, admin
 
-settings = Settings()
+origins = ["*"]
 
-app = FastAPI(
-    title="E-commerce API",
-    description="API for e-commerce platform",
-    version="1.0.0",
-    openapi_tags=[
-        {
-            "name": "auth",
-            "description": "Authentication endpoints"
-        },
-        {
-            "name": "products",
-            "description": "Product endpoints"
-        },
-        {
-            "name": "orders",
-            "description": "Order endpoints"
-        },
-        {
-            "name": "admin",
-            "description": "Admin endpoints"
-        }
-    ]
-)
-
-app.include_router(auth.router)
-app.include_router(products.router)
-app.include_router(orders.router)
-app.include_router(admin.router)
-
-origins = [
-    "http://localhost:8000",
-    "http://localhost:3000"
-]
+app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
@@ -52,11 +25,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.on_event("startup")
-async def startup_event():
-    await engine.dispose()
-    await engine.connect()
+app.include_router(auth.router)
+app.include_router(cart.router)
+app.include_router(orders.router)
+app.include_router(products.router)
+app.include_router(admin.router)
 
-@app.on_event("shutdown")
-async def shutdown_event():
-    await engine.dispose()
+@app.get("/")
+def read_root():
+    return {"message": "Welcome to the e-commerce platform"}, 
