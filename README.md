@@ -299,15 +299,14 @@ npm run dev
 ## API Endpoints
 
 - `POST /api/register` - Register a new user
-- `POST /api/login` - Log in a user
+- `POST /api/login` - Log in an existing user
 - `GET /api/products` - Get all products
 - `GET /api/products/{id}` - Get a product by ID
-- `POST /api/cart` - Add an item to cart
-- `POST /api/checkout` - Complete secure checkout
+- `POST /api/cart` - Add an item to the cart
 - `GET /api/orders` - Get all orders
-- `GET /api/orders/{id}` - Get an order by ID
-- `POST /api/admin/products` - Add a new product
-- `PUT /api/admin/products/{id}` - Update a product
+- `POST /api/orders` - Create a new order
+- `GET /api/admin/products` - Get all products for admin
+- `POST /api/admin/products` - Create a new product for admin
 
 ## License
 
