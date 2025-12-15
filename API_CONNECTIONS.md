@@ -5,42 +5,55 @@ This document describes the API connections between frontend and backend.
 
 ## Backend Endpoints
 
-Total endpoints: 5
+Total endpoints: 8
 
 ### Endpoints List
-
-- **GET** `/`
-  - Function: `read_root`
-  - Operation: `READ_ONE`
 
 - **POST** `/api/register`
   - Function: `register`
   - Operation: `CREATE`
 
-- **POST** `/api/login`
+- **POST** `/login`
   - Function: `login`
   - Operation: `CREATE`
+
+- **GET** `/api/products`
+  - Function: `get_products`
+  - Operation: `READ_ONE`
+
+- **GET** `/api/products/{product_id}`
+  - Function: `get_product`
+  - Operation: `READ_ONE`
 
 - **POST** `/api/cart`
   - Function: `add_to_cart`
   - Operation: `CREATE`
 
-- **POST** `/api/orders`
-  - Function: `create_order`
+- **GET** `/api/orders`
+  - Function: `get_orders`
+  - Operation: `READ_ONE`
+
+- **GET** `/api/orders/{order_id}`
+  - Function: `get_order`
+  - Operation: `READ_ONE`
+
+- **POST** `/api/payments`
+  - Function: `make_payment`
   - Operation: `CREATE`
 
 
 ## Frontend API Services
 
-Total services: 6
+Total services: 7
 
 ### Available Services
 
-- `default_service.js` - Default API operations
 - `register_service.js` - Register API operations
 - `login_service.js` - Login API operations
+- `products_service.js` - Products API operations
 - `cart_service.js` - Cart API operations
 - `orders_service.js` - Orders API operations
+- `payments_service.js` - Payments API operations
 
 ## Usage Example
 
