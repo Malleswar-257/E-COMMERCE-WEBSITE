@@ -294,19 +294,20 @@ npm run dev
 
 ## Features
 
-- No features specified
+- product management
+- order management
+- payment processing
 
 ## API Endpoints
 
 - `POST /api/register` - Register a new user
-- `POST /api/login` - Log in an existing user
+- `POST /api/login` - Log in a user
 - `GET /api/products` - Get all products
 - `GET /api/products/{id}` - Get a product by ID
-- `POST /api/cart` - Add an item to the cart
+- `POST /api/cart` - Add a product to cart
 - `GET /api/orders` - Get all orders
-- `POST /api/orders` - Create a new order
-- `GET /api/admin/products` - Get all products for admin
-- `POST /api/admin/products` - Create a new product for admin
+- `GET /api/orders/{id}` - Get an order by ID
+- `POST /api/payments` - Make a payment
 
 ## License
 
