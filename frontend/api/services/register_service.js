@@ -5,7 +5,7 @@ const RegisterService = {
   // Create new register
   async create(data) {
     try {
-      const response = await apiClient.post('/register', data);
+      const response = await apiClient.post('/api/register', data);
       return response;
     } catch (error) {
       console.error('Error creating register:', error);
