@@ -5,7 +5,7 @@ const LoginService = {
   // Create new login
   async create(data) {
     try {
-      const response = await apiClient.post('/api/login', data);
+      const response = await apiClient.post('/login', data);
       return response;
     } catch (error) {
       console.error('Error creating login:', error);
