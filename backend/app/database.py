@@ -1,19 +1,7 @@
 from sqlalchemy import create_engine
-from sqlalchemy.orm import declarative_base, scoped_session
-from sqlalchemy.orm.session import sessionmaker
-from app.settings import settings
+from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy import Column, Integer, String, Float
+from app.config import settings
 
-SQLALCHEMY_DATABASE_URL = settings.DATABASE_URL
-
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
-
+engine = create_engine(settings.DATABASE_URL)
 Base = declarative_base()
-
-SessionLocal = sessionmaker(bind = engine)
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-finally:
-    db.close()
