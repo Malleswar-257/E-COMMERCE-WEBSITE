@@ -1,32 +1,42 @@
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi import APIRouter, HTTPException
+from fastapi.responses import JSONResponse
+from fastapi.requests import Request
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from pydantic import BaseModel
+from typing import List, Optional
+import sqlite3
+from app.database import engine
 from app.models import User
-from app.database import get_db
-from app.utils import get_user
 
-router = APIRouter(
-    prefix="/auth",
-    tags=["auth"]
-)
+router = APIRouter()
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
 
-@router.post("/register")
-async def register(user: User):
-    db = next(get_db())
-    user_in_db = db.query(UserTable).filter(UserTable.email == user.email).first()
-    if user_in_db:
-        raise HTTPException(status_code=400, detail="Email already registered")
-    new_user = UserTable(email=user.email, password=user.password)
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
-    return new_user
+class RegisterRequest(BaseModel):
+    email: str
+    phone: str
+    password: str
 
-@router.post("/login")
-async def login(form_data: OAuth2PasswordRequestForm = Depends()):
-    user = get_user(form_data.username)
-    if not user:
-        raise HTTPException(status_code=401, detail="Incorrect email or password")
-    if not user.password == form_data.password:
-        raise HTTPException(status_code=401, detail="Incorrect email or password")
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+
+@router.post("/api/register")
+def register(request: RegisterRequest):
+    conn = engine.connect()
+    result = conn.execute("INSERT INTO users (email, phone, password) VALUES (?, ?, ?)", (request.email, request.phone, request.password))
+    conn.close()
+    return JSONResponse(content={"message": "User registered successfully"}, status_code=201)
+
+
+@router.post("/api/login")
+def login(request: LoginRequest):
+    conn = engine.connect()
+    result = conn.execute("SELECT * FROM users WHERE email = ? AND password = ?", (request.email, request.password))
+    user = result.fetchone()
+    conn.close()
+    if user:
+        return JSONResponse(content={"token": "your_token_here"}, status_code=200)
+else:
+    raise HTTPException(status_code=401, detail="Invalid email or password")
