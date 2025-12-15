@@ -2,13 +2,23 @@
 import apiClient from '../client.js';
 
 const OrdersService = {
-  // Create new orders
-  async create(data) {
+  // Get orders by ID
+  async getById(id) {
     try {
-      const response = await apiClient.post('/api/orders', data);
+      const response = await apiClient.get('/api/orders'.replace('{id}', id));
       return response;
     } catch (error) {
-      console.error('Error creating orders:', error);
+      console.error('Error fetching orders:', error);
+      throw error;
+    }
+  }
+  // Get orders by ID
+  async getById(id) {
+    try {
+      const response = await apiClient.get('/api/orders/{order_id}'.replace('{id}', id));
+      return response;
+    } catch (error) {
+      console.error('Error fetching orders:', error);
       throw error;
     }
   }
